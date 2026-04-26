@@ -110,23 +110,6 @@
       padding: 32px 24px 20px; gap: 16px;
     }
 
-    .crosshair {
-      position: relative; width: 26px; height: 26px;
-      margin-bottom: 6px; flex-shrink: 0;
-    }
-    .ch-v {
-      position: absolute; width: 1px; height: 0;
-      background: rgba(200,48,42,0.55); left: 50%; top: 0;
-      animation: ch-v-draw 0.4s ease 1.1s forwards, ch-pulse 3.5s ease-in-out 2s infinite;
-    }
-    .ch-h {
-      position: absolute; width: 0; height: 1px;
-      background: rgba(200,48,42,0.55); top: 50%; left: 0;
-      animation: ch-h-draw 0.4s ease 1.25s forwards, ch-pulse 3.5s ease-in-out 2.5s infinite;
-    }
-    @keyframes ch-v-draw { from { height: 0; } to { height: 100%; } }
-    @keyframes ch-h-draw { from { width:  0; } to { width:  100%; } }
-    @keyframes ch-pulse  { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
 
     .hero-text {
       font-size: clamp(28px,5.2vw,64px);
@@ -242,10 +225,6 @@
     </header>
 
     <main class="hero">
-      <div class="crosshair">
-        <div class="ch-v"></div>
-        <div class="ch-h"></div>
-      </div>
       <p class="hero-text" id="tez-text"><span class="cursor" id="cursor"></span></p>
       <p class="hero-sub" id="tagline">memarlıq dizayn studiya</p>
       <div class="hero-rule" id="hero-rule"></div>
@@ -287,39 +266,54 @@
       resize();
       window.addEventListener('resize', resize);
 
-      // Logo palette: dark charcoal #2a2826, red #c8302a
-      // Each wave: y position (ratio), amplitude, frequency, speed, phase offset, colour, line width
+      // Subtle background lines + bold featured waves in logo palette
+      // y=position ratio, amp=amplitude(px), f=frequency, s=speed, p=phase, c=colour, lw=lineWidth
       const WAVES = [
-        { y:.05, amp:12, f:.0046, s:.38, p:0.0, c:'rgba(42,40,38,0.055)', lw:.8 },
-        { y:.13, amp:22, f:.0062, s:.26, p:1.3, c:'rgba(200,48,42,0.07)',  lw:.9 }, // red
-        { y:.21, amp:16, f:.0038, s:.55, p:2.6, c:'rgba(42,40,38,0.045)', lw:.7 },
-        { y:.30, amp:28, f:.0054, s:.32, p:0.7, c:'rgba(42,40,38,0.050)', lw:.8 },
-        { y:.39, amp:18, f:.0068, s:.48, p:3.1, c:'rgba(200,48,42,0.05)', lw:.8 }, // red
-        { y:.48, amp:24, f:.0050, s:.30, p:1.8, c:'rgba(42,40,38,0.042)', lw:.7 },
-        { y:.56, amp:14, f:.0042, s:.60, p:2.2, c:'rgba(42,40,38,0.055)', lw:.9 },
-        { y:.65, amp:30, f:.0058, s:.36, p:0.4, c:'rgba(200,48,42,0.04)', lw:.7 }, // red
-        { y:.74, amp:19, f:.0044, s:.52, p:1.9, c:'rgba(42,40,38,0.048)', lw:.8 },
-        { y:.83, amp:25, f:.0065, s:.28, p:3.6, c:'rgba(42,40,38,0.040)', lw:.7 },
-        { y:.92, amp:15, f:.0048, s:.44, p:2.8, c:'rgba(42,40,38,0.052)', lw:.8 },
+        // Fine background lines
+        { y:.04, amp:11, f:.0036, s:.22, p:0.0, c:'rgba(42,40,38,0.048)', lw:.60 },
+        { y:.14, amp:15, f:.0028, s:.18, p:2.3, c:'rgba(42,40,38,0.040)', lw:.55 },
+        { y:.24, amp: 9, f:.0042, s:.26, p:1.1, c:'rgba(42,40,38,0.036)', lw:.55 },
+        { y:.57, amp:13, f:.0033, s:.23, p:2.9, c:'rgba(42,40,38,0.042)', lw:.60 },
+        { y:.72, amp:17, f:.0027, s:.19, p:0.6, c:'rgba(42,40,38,0.040)', lw:.55 },
+        { y:.86, amp:12, f:.0039, s:.25, p:2.5, c:'rgba(42,40,38,0.038)', lw:.55 },
+        { y:.96, amp:10, f:.0034, s:.17, p:1.5, c:'rgba(42,40,38,0.035)', lw:.55 },
+
+        // Bold featured waves — wide, slow, elegant
+        { y:.34, amp:42, f:.0022, s:.13, p:1.9, c:'rgba(200,48,42,0.13)', lw:1.4 }, // red
+        { y:.47, amp:48, f:.0018, s:.10, p:3.5, c:'rgba(42,40,38,0.095)', lw:1.3 }, // dark
+        { y:.62, amp:38, f:.0025, s:.15, p:0.3, c:'rgba(200,48,42,0.08)', lw:1.1 }, // red
+        { y:.79, amp:34, f:.0029, s:.12, p:2.7, c:'rgba(42,40,38,0.080)', lw:1.1 }, // dark
       ];
 
       let t = 0;
       function draw() {
         ctx.clearRect(0, 0, w, h);
+
         WAVES.forEach(wv => {
           const baseY = h * wv.y;
           ctx.beginPath();
           ctx.strokeStyle = wv.c;
           ctx.lineWidth   = wv.lw;
+          ctx.lineJoin    = 'round';
           for (let x = 0; x <= w; x += 2) {
-            // Two overlapping harmonics for organic, non-mechanical motion
             const y = baseY
-              + Math.sin(x * wv.f  + t * wv.s + wv.p) * wv.amp
-              + Math.sin(x * wv.f * 2.2 + t * wv.s * 0.65 + wv.p + 1.1) * (wv.amp * 0.30);
+              + Math.sin(x * wv.f + t * wv.s + wv.p) * wv.amp
+              + Math.sin(x * wv.f * 1.9 + t * wv.s * 0.6 + wv.p + 1.3) * (wv.amp * 0.25);
             x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
           }
           ctx.stroke();
         });
+
+        // Soft edge fade — waves emerge from and recede into the sides
+        const fade = w * 0.09;
+        const eg = ctx.createLinearGradient(0, 0, w, 0);
+        eg.addColorStop(0,        'rgba(243,242,238,1)');
+        eg.addColorStop(fade / w, 'rgba(243,242,238,0)');
+        eg.addColorStop(1 - fade / w, 'rgba(243,242,238,0)');
+        eg.addColorStop(1,        'rgba(243,242,238,1)');
+        ctx.fillStyle = eg;
+        ctx.fillRect(0, 0, w, h);
+
         t += 0.016;
         requestAnimationFrame(draw);
       }
